@@ -1,23 +1,42 @@
-import logo from './logo.svg';
-import './App.css';
+import { useCallback, useRef, useState } from "react";
+import "./App.css";
+import InfiniteScroll from "./components/InfiniteScroll";
 
 function App() {
+  const [input, setInput] = useState("");
+  const [data, setData] = useState([]);
+  const controllerRef = useRef(null);
+
+  const handleInput = (e) => {
+    setInput(e.target.value);
+  };
+
+  const getData = useCallback((query, pageNumber) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const promise = await fetch(
+          "https://openlibrary.org/search.json?" +
+            new URLSearchParams({
+              q: query,
+              page: pageNumber,
+            })
+        );
+        const data = await promise.json();
+        console.log(data);
+        resolve();
+        setData((prevData) => [...prevData, ...data.docs]);
+      } catch (e) {
+        reject();
+      }
+    });
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>Infinite Scroll</h1>
+      <input placeholder="Search Here" value={input} onChange={handleInput} />
+
+      <InfiniteScroll getData={getData} data={data} input={input} />
     </div>
   );
 }
